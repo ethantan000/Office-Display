@@ -2,6 +2,9 @@
 //  OFFICE DISPLAY — ADMIN / PLAYLIST MANAGER
 // ============================================================
 
+// Apply saved theme immediately on load (themes.js is loaded before this file)
+loadTheme();
+
 const PLAYLIST_KEY = 'officeDisplayPlaylist';
 
 const DEFAULT_PLAYLIST = [
@@ -88,6 +91,45 @@ function isCurrentlyActive(asset) {
 }
 
 // ── Playlist persistence ──────────────────────────────────────
+
+// ── Theme picker ──────────────────────────────────────────────
+
+function renderThemePicker() {
+  const grid = $('theme-grid');
+  if (!grid) return;
+
+  const currentTheme = localStorage.getItem(window.THEME_KEY) || 'midnight';
+  grid.innerHTML = '';
+
+  Object.entries(window.OFFICE_THEMES).forEach(([id, theme]) => {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (id === currentTheme ? ' active' : '');
+    card.dataset.themeId = id;
+
+    const [bg1, bg2, blob1, blob2] = theme.swatch;
+
+    card.innerHTML = `
+      <div class="theme-preview" style="background:linear-gradient(135deg,${bg1},${bg2})">
+        <div class="tp-blob" style="background:${blob1};opacity:0.7;"></div>
+        <div class="tp-blob" style="background:${blob2};opacity:0.6;"></div>
+        <div class="tp-blob" style="background:${blob1};opacity:0.35;"></div>
+        <div class="theme-check">✓</div>
+      </div>
+      <div class="theme-info">
+        <div class="theme-name">${theme.label}</div>
+        <div class="theme-desc">${theme.description}</div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      window.saveTheme(id);
+      renderThemePicker();
+      showToast(`Theme: ${theme.label}`);
+    });
+
+    grid.appendChild(card);
+  });
+}
 
 function loadPlaylist() {
   try {
@@ -460,6 +502,7 @@ document.addEventListener('keydown', e => {
 
 // ── Initial render ────────────────────────────────────────────
 
+renderThemePicker();
 renderPlaylist();
 
 // Refresh active status every minute

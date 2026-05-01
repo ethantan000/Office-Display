@@ -4,6 +4,14 @@
 
 const CFG = window.OFFICE_CONFIG;
 
+// Apply saved theme immediately (themes.js loaded before this file)
+loadTheme();
+
+// Live-update theme when admin changes it in another tab/window
+window.addEventListener('storage', e => {
+  if (e.key === window.THEME_KEY) loadTheme();
+});
+
 // ── Helpers ──────────────────────────────────────────────────
 
 function $(id) { return document.getElementById(id); }
