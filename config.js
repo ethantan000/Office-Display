@@ -53,8 +53,12 @@ window.OFFICE_CONFIG = {
   ],
 
   // --- Display ---
-  // Rotate through news headlines every N seconds
-  newsRotateSeconds: 8,
   // 12 or 24 hour clock
   clockFormat: 12,
+  // Rotate through news headlines every N seconds
+  newsRotateSeconds: 8,
+
+  // --- Playlist (Anthias-style) ---
+  // Default duration (seconds) for new slides and fallback when no playlist is configured.
+  defaultSlideDuration: 30,
 };

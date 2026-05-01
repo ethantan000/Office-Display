@@ -22,6 +22,10 @@ function changeClass(change) {
   return 'flat';
 }
 
+function generateId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
 // ── Clock & Date ─────────────────────────────────────────────
 
 function updateClock() {
@@ -65,7 +69,7 @@ function buildCalendar() {
   const today = now.getDate();
 
   const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const firstDay  = new Date(year, month, 1).getDay(); // 0=Sun
+  const firstDay  = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const container = $('calendar-container');
@@ -86,7 +90,6 @@ function buildCalendar() {
     grid.appendChild(dn);
   });
 
-  // blank cells before the 1st
   for (let i = 0; i < firstDay; i++) {
     const blank = document.createElement('div');
     blank.className = 'day empty';
@@ -97,8 +100,8 @@ function buildCalendar() {
     const cell = document.createElement('div');
     cell.className = 'day';
     const dow = (firstDay + d - 1) % 7;
-    if (d === today)            cell.classList.add('today');
-    else if (dow === 0 || dow === 6) cell.classList.add('weekend');
+    if (d === today)                   cell.classList.add('today');
+    else if (dow === 0 || dow === 6)   cell.classList.add('weekend');
     cell.textContent = d;
     grid.appendChild(cell);
   }
@@ -108,7 +111,6 @@ function buildCalendar() {
 
 buildCalendar();
 
-// Rebuild at midnight
 (function scheduleMidnight() {
   const now = new Date();
   const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
@@ -126,10 +128,7 @@ const WEATHER_ICONS = {
 
 async function fetchWeather() {
   const key = CFG.weatherApiKey;
-  if (!key) {
-    showWeatherDemo();
-    return;
-  }
+  if (!key) { showWeatherDemo(); return; }
 
   const loc   = CFG.weatherLocation;
   const units = CFG.weatherUnits;
@@ -138,7 +137,6 @@ async function fetchWeather() {
   const q = encodeURIComponent(loc);
 
   try {
-    // Current weather
     const [curr, fore] = await Promise.all([
       fetch(`https://api.openweathermap.org/data/2.5/weather?q=${q}&appid=${key}&units=${units}`).then(r => r.json()),
       fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${q}&appid=${key}&units=${units}&cnt=40`).then(r => r.json()),
@@ -153,7 +151,6 @@ async function fetchWeather() {
     $('weather-humidity').textContent = `${curr.main.humidity}%`;
     $('weather-wind').textContent = `${Math.round(curr.wind.speed)} ${windLabel}`;
 
-    // 4-day forecast (take noon reading for each future day)
     if (fore.cod === '200') {
       const days = {};
       fore.list.forEach(item => {
@@ -220,16 +217,13 @@ setInterval(fetchWeather, CFG.weatherRefreshMinutes * 60 * 1000);
 
 // ── Stocks ───────────────────────────────────────────────────
 
-let stockData = {}; // symbol -> { price, change, changePct }
+let stockData = {};
 
 async function fetchStocks() {
   const key     = CFG.stocksApiKey;
   const symbols = CFG.stockSymbols;
 
-  if (!key) {
-    showStocksDemo();
-    return;
-  }
+  if (!key) { showStocksDemo(); return; }
 
   const results = await Promise.allSettled(
     symbols.map(sym =>
@@ -240,9 +234,7 @@ async function fetchStocks() {
   );
 
   results.forEach(r => {
-    if (r.status === 'fulfilled') {
-      stockData[r.value.sym] = r.value;
-    }
+    if (r.status === 'fulfilled') stockData[r.value.sym] = r.value;
   });
 
   renderStocks();
@@ -296,9 +288,8 @@ function renderBottomTicker() {
     ticker.appendChild(item);
   });
 
-  // Restart animation so new data scrolls from the right
   ticker.style.animation = 'none';
-  ticker.offsetHeight; // reflow
+  ticker.offsetHeight;
   ticker.style.animation = '';
 }
 
@@ -338,14 +329,12 @@ async function fetchMessage() {
     $('daily-message').textContent = `"${data.content}"`;
     $('daily-author').textContent   = `— ${data.author}`;
   } catch {
-    // fallback to built-in list
     CFG.useCustomMessages = true;
     fetchMessage();
   }
 }
 
 fetchMessage();
-// Rotate quote every hour
 setInterval(fetchMessage, 60 * 60 * 1000);
 
 // ── News ──────────────────────────────────────────────────────
@@ -375,43 +364,11 @@ async function fetchNews() {
   }
 }
 
-function rotateNews() {
-  if (!newsHeadlines.length) return;
-  const ticker = $('news-ticker');
-  ticker.style.opacity = '0';
-  setTimeout(() => {
-    ticker.textContent = newsHeadlines[newsIndex % newsHeadlines.length];
-    newsIndex++;
-    ticker.style.opacity = '1';
-  }, 400);
-}
-
-// Swap the bottom ticker label to NEWS and show headline every N seconds
-let tickerMode = 'stocks'; // 'stocks' | 'news'
-let tickerModeCounter = 0;
-const STOCKS_CYCLES = 3; // show stocks for 3 scroll cycles, then news once
-
-function tickerModeToggle() {
-  if (!newsHeadlines.length) return;
-  tickerModeCounter++;
-
-  const label  = document.querySelector('.ticker-label');
-  const ticker = $('bottom-ticker');
-
-  if (tickerMode === 'stocks' && tickerModeCounter >= STOCKS_CYCLES) {
-    // switch to news
-    tickerMode = 'stocks'; // always show stocks in ticker for now; news shown via news card area
-  }
-}
-
-// Separate news display: re-use the hidden .news-card approach —
-// instead we inject headlines into the bottom ticker alternating with stocks.
 function startNewsCycle() {
-  if (newsHeadlines.length === 0) return;
+  if (!newsHeadlines.length) return;
 
   const label  = document.querySelector('.ticker-label');
   const ticker = $('bottom-ticker');
-
   let isNews = false;
 
   setInterval(() => {
@@ -443,3 +400,211 @@ function startNewsCycle() {
   startNewsCycle();
   setInterval(fetchNews, CFG.newsRefreshMinutes * 60 * 1000);
 })();
+
+// ── Admin shortcut hint ───────────────────────────────────────
+
+(function showAdminHint() {
+  const hint = $('admin-hint');
+  setTimeout(() => hint.classList.add('visible'), 500);
+  setTimeout(() => hint.classList.remove('visible'), 4000);
+})();
+
+// ============================================================
+//  PLAYLIST ENGINE  (Anthias-inspired)
+//
+//  Reads a playlist from localStorage, filters active assets
+//  based on scheduling rules, and cycles through them with a
+//  progress-bar countdown. Supports asset types:
+//    dashboard — the existing info widgets
+//    image     — fullscreen image (URL or data URL)
+//    video     — fullscreen video (URL or data URL)
+//    url       — fullscreen iframe embed
+// ============================================================
+
+const PLAYLIST_KEY = 'officeDisplayPlaylist';
+
+const DEFAULT_PLAYLIST = [
+  {
+    id: 'default-dashboard',
+    name: 'Dashboard',
+    type: 'dashboard',
+    src: '',
+    duration: CFG.defaultSlideDuration,
+    enabled: true,
+    schedule: null,
+  },
+];
+
+// ── Playlist persistence ──────────────────────────────────────
+
+function loadPlaylist() {
+  try {
+    const raw = localStorage.getItem(PLAYLIST_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {}
+  return DEFAULT_PLAYLIST;
+}
+
+function savePlaylist(playlist) {
+  localStorage.setItem(PLAYLIST_KEY, JSON.stringify(playlist));
+}
+
+// Seed localStorage with the default if nothing is stored yet
+if (!localStorage.getItem(PLAYLIST_KEY)) {
+  savePlaylist(DEFAULT_PLAYLIST);
+}
+
+// ── Schedule filtering ────────────────────────────────────────
+
+function isAssetActive(asset) {
+  if (!asset.enabled) return false;
+  if (!asset.schedule) return true;
+
+  const now  = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const dow  = now.getDay(); // 0=Sun
+
+  const { startDate, endDate, daysOfWeek, startTime, endTime } = asset.schedule;
+
+  if (startDate && date < startDate) return false;
+  if (endDate   && date > endDate)   return false;
+
+  if (daysOfWeek && daysOfWeek.length && !daysOfWeek.includes(dow)) return false;
+
+  if (startTime && endTime) {
+    if (startTime <= endTime) {
+      if (time < startTime || time > endTime) return false;
+    } else {
+      // overnight window e.g. 22:00–06:00
+      if (time < startTime && time > endTime) return false;
+    }
+  }
+
+  return true;
+}
+
+// ── Viewer ────────────────────────────────────────────────────
+
+const overlay    = $('slide-overlay');
+const slideImg   = $('slide-img');
+const slideVideo = $('slide-video');
+const slideIframe = $('slide-iframe');
+const slideBadge = $('slide-name-badge');
+const progressBar = $('slide-progress-bar');
+const dashboardEls = document.querySelectorAll('.dashboard-only');
+
+let currentIndex  = 0;
+let slideTimer    = null;
+let progressTimer = null;
+
+function showDashboard() {
+  overlay.classList.add('hidden');
+  [slideImg, slideVideo, slideIframe].forEach(el => {
+    el.classList.add('hidden');
+    if (el === slideVideo) el.pause?.();
+    if (el === slideIframe) el.src = 'about:blank';
+  });
+  dashboardEls.forEach(el => el.classList.remove('hidden'));
+}
+
+function showOverlay(asset) {
+  dashboardEls.forEach(el => el.classList.add('hidden'));
+  [slideImg, slideVideo, slideIframe].forEach(el => el.classList.add('hidden'));
+
+  overlay.classList.remove('hidden');
+  slideBadge.textContent = asset.name;
+
+  if (asset.type === 'image') {
+    slideImg.src = asset.src;
+    slideImg.classList.remove('hidden');
+  } else if (asset.type === 'video') {
+    slideVideo.src = asset.src;
+    slideVideo.classList.remove('hidden');
+    slideVideo.play().catch(() => {});
+  } else if (asset.type === 'url') {
+    slideIframe.src = asset.src;
+    slideIframe.classList.remove('hidden');
+  }
+}
+
+function startProgressBar(durationSeconds) {
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '0%';
+  progressBar.offsetHeight; // reflow
+  progressBar.style.transition = `width ${durationSeconds}s linear`;
+  progressBar.style.width = '100%';
+}
+
+function showAsset(asset) {
+  if (asset.type === 'dashboard') {
+    showDashboard();
+  } else {
+    showOverlay(asset);
+  }
+
+  // For video with duration=0, advance when the video ends
+  if (asset.type === 'video' && asset.duration === 0) {
+    slideVideo.onended = () => advance();
+    return; // no timer
+  }
+
+  const duration = asset.duration > 0 ? asset.duration : CFG.defaultSlideDuration;
+  startProgressBar(duration);
+
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(advance, duration * 1000);
+}
+
+function advance() {
+  clearTimeout(slideTimer);
+  const playlist = loadPlaylist();
+  const active   = playlist.filter(isAssetActive);
+
+  if (!active.length) {
+    // Nothing scheduled — fall back to dashboard
+    showDashboard();
+    startProgressBar(CFG.defaultSlideDuration);
+    slideTimer = setTimeout(advance, CFG.defaultSlideDuration * 1000);
+    return;
+  }
+
+  currentIndex = currentIndex % active.length;
+  const asset  = active[currentIndex];
+  currentIndex = (currentIndex + 1) % active.length;
+
+  showAsset(asset);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const key = e.key.toUpperCase();
+  if (key === 'A') {
+    window.location.href = 'admin.html';
+  } else if (key === 'ARROWRIGHT' || key === ' ') {
+    clearTimeout(slideTimer);
+    advance();
+  } else if (key === 'F') {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+});
+
+// Re-read playlist every 30 s so admin changes apply without a page reload
+setInterval(() => {
+  // Only interrupt if the playlist structure has changed
+  const playlist = loadPlaylist();
+  const active   = playlist.filter(isAssetActive);
+  if (active.length && currentIndex >= active.length) {
+    currentIndex = 0;
+  }
+}, 30000);
+
+// Start the playlist
+advance();

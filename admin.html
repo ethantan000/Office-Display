@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Office Display — Playlist Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="admin-body">
+
+  <header class="admin-header">
+    <h1>
+      <span class="dot"></span>
+      Playlist Manager
+    </h1>
+    <nav class="admin-nav">
+      <a href="index.html" class="btn btn-ghost">← Back to Display</a>
+      <button id="btn-add" class="btn btn-primary">+ Add Asset</button>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+
+    <div class="playlist-header">
+      <h2>Playlist</h2>
+      <span id="playlist-meta" class="playlist-meta"></span>
+    </div>
+
+    <div id="asset-list" class="asset-list">
+      <!-- populated by admin.js -->
+    </div>
+
+  </main>
+
+  <!-- ── ADD / EDIT MODAL ───────────────────────────────── -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+      <div class="modal-header">
+        <h3 id="modal-title">Add Asset</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Basic info -->
+        <div class="form-section-title">Basic</div>
+
+        <div class="form-group">
+          <label for="f-name">Asset Name</label>
+          <input type="text" id="f-name" placeholder="e.g. Company Promo Slide" maxlength="80" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-type">Type</label>
+            <select id="f-type">
+              <option value="dashboard">Dashboard (info widgets)</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="url">Web Page / URL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-duration">Duration (seconds)</label>
+            <input type="number" id="f-duration" min="1" max="3600" value="30" />
+            <div class="form-hint">Set to 0 for videos to play to end.</div>
+          </div>
+        </div>
+
+        <!-- Source (hidden for dashboard) -->
+        <div id="src-group" class="form-group field-hidden">
+          <label id="src-label" for="f-src">Source URL</label>
+          <input type="url" id="f-src" placeholder="https://..." />
+          <div class="form-hint" id="src-hint">Enter a direct URL to the file or web page.</div>
+        </div>
+
+        <div id="file-group" class="form-group field-hidden">
+          <label for="f-file">Or upload a file</label>
+          <input type="file" id="f-file" accept="image/*,video/*" />
+          <div class="form-hint">File is stored locally in browser storage (localStorage).</div>
+          <div id="file-size-warning" class="form-hint" style="color:var(--yellow); display:none;">
+            Large files may exceed localStorage limits (~5 MB). Consider using a URL instead.
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="form-section-title" style="margin-top:20px;">Schedule <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">— optional</span></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-start-date">Start Date</label>
+            <input type="date" id="f-start-date" />
+            <div class="form-hint">Leave blank to start immediately.</div>
+          </div>
+          <div class="form-group">
+            <label for="f-end-date">End Date</label>
+            <input type="date" id="f-end-date" />
+            <div class="form-hint">Leave blank to run indefinitely.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Days of Week</label>
+          <div class="dow-grid" id="dow-grid">
+            <button type="button" class="dow-btn active" data-dow="0">Sun</button>
+            <button type="button" class="dow-btn active" data-dow="1">Mon</button>
+            <button type="button" class="dow-btn active" data-dow="2">Tue</button>
+            <button type="button" class="dow-btn active" data-dow="3">Wed</button>
+            <button type="button" class="dow-btn active" data-dow="4">Thu</button>
+            <button type="button" class="dow-btn active" data-dow="5">Fri</button>
+            <button type="button" class="dow-btn active" data-dow="6">Sat</button>
+          </div>
+          <div class="form-hint">Toggle days when this asset should be shown.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-start-time">Start Time</label>
+            <input type="time" id="f-start-time" value="00:00" />
+          </div>
+          <div class="form-group">
+            <label for="f-end-time">End Time</label>
+            <input type="time" id="f-end-time" value="23:59" />
+          </div>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn btn-success" id="modal-save">Save Asset</button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /modal-backdrop -->
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

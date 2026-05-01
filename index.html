@@ -7,8 +7,20 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- TOP BAR: Logo + Clock/Date -->
-  <header class="top-bar">
+
+  <!-- Slide progress bar (top of screen, always visible) -->
+  <div id="slide-progress-bar" class="slide-progress-bar"></div>
+
+  <!-- Fullscreen overlay for image / video / URL slides -->
+  <div id="slide-overlay" class="slide-overlay hidden">
+    <img      id="slide-img"    class="slide-asset hidden" alt="" />
+    <video    id="slide-video"  class="slide-asset hidden" autoplay muted playsinline></video>
+    <iframe   id="slide-iframe" class="slide-asset hidden" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" allowfullscreen></iframe>
+    <div id="slide-name-badge" class="slide-name-badge"></div>
+  </div>
+
+  <!-- TOP BAR: Logo + Clock/Date (dashboard slide only) -->
+  <header class="top-bar dashboard-only">
     <div class="logo-area">
       <img id="company-logo" src="" alt="Company Logo" />
       <span id="company-name">Your Company</span>
@@ -19,8 +31,9 @@
     </div>
   </header>
 
-  <!-- MAIN GRID -->
-  <main class="grid">
+  <!-- MAIN GRID (dashboard slide only) -->
+  <main class="grid dashboard-only">
+
     <!-- Weather -->
     <section class="card weather-card">
       <h2>Weather</h2>
@@ -59,22 +72,18 @@
       <cite id="daily-author" class="daily-author"></cite>
     </section>
 
-    <!-- News Ticker -->
-    <section class="card news-card">
-      <h2>News</h2>
-      <div id="news-container" class="news-container">
-        <div id="news-ticker" class="news-ticker">Loading news...</div>
-      </div>
-    </section>
   </main>
 
-  <!-- BOTTOM TICKER BAR -->
-  <footer class="ticker-bar">
+  <!-- BOTTOM TICKER BAR (dashboard slide only) -->
+  <footer class="ticker-bar dashboard-only">
     <div class="ticker-label">STOCKS</div>
     <div class="ticker-track-wrapper">
       <div id="bottom-ticker" class="ticker-track">Loading...</div>
     </div>
   </footer>
+
+  <!-- Admin shortcut hint (shown briefly on load) -->
+  <div id="admin-hint" class="admin-hint">Press <kbd>A</kbd> to manage playlist</div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>

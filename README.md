@@ -1,9 +1,13 @@
 # Office Display Dashboard
 
-A self-contained office TV dashboard. No server required — open `index.html` in a browser.
+A self-contained office TV dashboard inspired by [Anthias (Screenly OSE)](https://github.com/Screenly/Anthias).
+No server or build step required — open `index.html` in a browser (or use the kiosk launcher).
+
+---
 
 ## What it shows
 
+### Dashboard slide (always included)
 | Widget | Description |
 |--------|-------------|
 | **Clock & Date** | Live clock (12 or 24h), full date |
@@ -12,6 +16,23 @@ A self-contained office TV dashboard. No server required — open `index.html` i
 | **Stocks** | Live prices with % change |
 | **Message of the Day** | Rotating quote (custom or auto-fetched) |
 | **Bottom Ticker** | Scrolling stock prices that alternate with news headlines |
+
+### Playlist (Anthias-inspired)
+Add any number of additional slides alongside the dashboard — they cycle automatically:
+
+| Asset type | Description |
+|-----------|-------------|
+| **Dashboard** | The info-widget screen above |
+| **Image** | Full-screen image (URL or uploaded file) |
+| **Video** | Full-screen video (URL or uploaded file); auto-advances when done |
+| **Web Page / URL** | Full-screen iframe embed of any URL |
+
+Each asset supports:
+- **Per-asset duration** — how long it stays on screen before advancing
+- **Date range scheduling** — start/end dates (e.g. show a promo only this week)
+- **Days-of-week filtering** — e.g. only weekdays, or only weekends
+- **Time-of-day window** — e.g. only 09:00–17:00
+- **Enable/disable toggle** — skip an asset without deleting it
 
 ---
 
@@ -36,6 +57,7 @@ window.OFFICE_CONFIG = {
   stocksApiKey: "YOUR_KEY",
   stockSymbols: ["AAPL", "MSFT", "SPY"],
   newsApiKey: "YOUR_KEY",
+  defaultSlideDuration: 30,     // seconds per slide
   // ...
 };
 ```
@@ -44,79 +66,96 @@ window.OFFICE_CONFIG = {
 
 **Option A — No server needed (simplest):**
 ```bash
-# Double-click index.html, or:
 open index.html       # macOS
 xdg-open index.html   # Linux
 ```
+> Note: NewsAPI requires a local server (CORS). See Option B.
 
-> Note: NewsAPI requires a local server (CORS) in production. See Option B.
-
-**Option B — Local HTTP server (recommended for all features):**
+**Option B — Local HTTP server (recommended):**
 ```bash
-# Python 3 (built-in):
-python3 -m http.server 8080
-# Then open: http://localhost:8080
-
-# Node.js (if installed):
-npx serve .
+python3 -m http.server 8080   # then open http://localhost:8080
 ```
 
-**Option C — Auto-launch on boot (Raspberry Pi / spare PC):**
+**Option C — Auto-launch on boot:**
+```bash
+chmod +x launch-kiosk.sh && ./launch-kiosk.sh
+```
 
-See `launch-kiosk.sh` for a ready-made kiosk launcher.
+---
+
+## Playlist Manager (Admin UI)
+
+Open `admin.html` in your browser, or press **`A`** while the display is running.
+
+### Adding a slide
+
+1. Click **+ Add Asset**
+2. Choose a type: Dashboard, Image, Video, or Web Page
+3. Paste a URL or upload a file (images/video are stored as data URLs in the browser)
+4. Set the duration and optional schedule
+5. Click **Save Asset**
+
+### Scheduling an asset
+
+In the Add/Edit modal, use the **Schedule** section:
+
+- **Start / End Date** — leave blank to run indefinitely
+- **Days of Week** — click day buttons to toggle; all selected = every day
+- **Start / End Time** — restrict to office hours, lunch time, etc.
+
+Example: show a "Happy Hour" slide only on Fridays from 17:00–18:00:
+- Days of Week: `Fri` only
+- Start Time: `17:00`, End Time: `18:00`
+
+### Reordering
+
+Drag rows by the `⠿` handle, or use the `▲`/`▼` buttons.
+
+### Keyboard shortcuts (on the viewer)
+
+| Key | Action |
+|-----|--------|
+| `A` | Open playlist manager |
+| `→` or `Space` | Skip to next slide |
+| `F` | Toggle fullscreen |
 
 ---
 
 ## Kiosk Mode (TV Setup)
 
-Run the dashboard full-screen on boot using Chromium:
-
 ```bash
-# Make launcher executable
 chmod +x launch-kiosk.sh
-
-# Test it
 ./launch-kiosk.sh
-
-# To run on boot, add to /etc/xdg/autostart/ or crontab @reboot
 ```
 
-The script starts a local HTTP server and opens Chromium in kiosk mode (no address bar, no cursor, no sleep).
+Starts a local HTTP server and opens Chromium in full kiosk mode (no address bar, no cursor, no sleep). Works on Raspberry Pi or any spare Linux/Windows PC.
+
+**To run on boot (Raspberry Pi):**
+```bash
+echo "@/home/pi/office-display/launch-kiosk.sh" >> ~/.config/lxsession/LXDE-pi/autostart
+```
 
 ---
 
-## Customization
-
-### Company Logo
-Drop your logo image into this folder and set `logoUrl: "logo.png"` in `config.js`.
-
-### Custom Messages
-Set `useCustomMessages: true` and fill in the `customMessages` array in `config.js`.
-
-### Stock Symbols
-Edit `stockSymbols` in `config.js`. Supports any symbol Finnhub knows (US equities, ETFs, crypto pairs like `BINANCE:BTCUSDT`).
-
-### Colors / Layout
-Edit `styles.css`. The `:root` block at the top has all color variables.
-
----
-
-## Running on a Raspberry Pi
-
-1. Install Raspberry Pi OS Lite + desktop
-2. Clone this repo: `git clone <url> ~/office-display`
-3. Install Chromium: `sudo apt install chromium-browser`
-4. `chmod +x ~/office-display/launch-kiosk.sh`
-5. Add to autostart: `echo "@/home/pi/office-display/launch-kiosk.sh" >> ~/.config/lxsession/LXDE-pi/autostart`
-
----
-
-## Files
+## File Structure
 
 ```
-index.html        — Main dashboard page
+index.html        — Viewer / display page
+admin.html        — Playlist manager UI
 config.js         — All configuration (edit this)
-app.js            — All logic (clock, weather, stocks, news, calendar)
-styles.css        — All styling
-launch-kiosk.sh   — Kiosk mode launcher script
+app.js            — Viewer logic (clock, weather, stocks, news, playlist engine)
+admin.js          — Playlist manager logic
+styles.css        — All styling (viewer + admin)
+launch-kiosk.sh   — Kiosk launcher script
 ```
+
+---
+
+## Architecture notes
+
+The playlist is stored in **browser localStorage** under the key `officeDisplayPlaylist` as a JSON array.
+The viewer re-reads localStorage every 30 seconds, so changes made in the admin page apply to a running
+display without a manual page reload.
+
+For images and videos uploaded via the admin UI, the file is converted to a base64 data URL and stored
+in localStorage. Browser localStorage is typically limited to ~5 MB; for larger media use external URLs.
