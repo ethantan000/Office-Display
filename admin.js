@@ -2,10 +2,10 @@
 //  OFFICE DISPLAY — ADMIN / PLAYLIST MANAGER
 // ============================================================
 
-// Apply saved theme immediately on load (themes.js is loaded before this file)
-loadTheme();
+// themes.js self-initializes, so theme is already applied before this runs.
 
-const PLAYLIST_KEY = 'officeDisplayPlaylist';
+const PLAYLIST_KEY  = 'officeDisplayPlaylist';
+const SETTINGS_KEY  = 'officeDisplaySettings';
 
 const DEFAULT_PLAYLIST = [
   {
@@ -499,6 +499,136 @@ $('f-file').addEventListener('change', () => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
+
+// ── Dashboard Settings ────────────────────────────────────────
+
+const MESSAGE_SOURCE_HINTS = {
+  quotes: 'A new quote is fetched from <strong>quotable.io</strong> each day. No API key required.',
+  tips:   'Cycles through a built-in list of <strong>workplace productivity tips</strong>, one per day.',
+  facts:  'Cycles through a built-in list of <strong>fun facts</strong>, one per day.',
+  custom: 'Shows messages from your list below, cycling one per day in order.',
+};
+
+function getSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return Object.assign({}, window.OFFICE_CONFIG, saved);
+  } catch {
+    return Object.assign({}, window.OFFICE_CONFIG);
+  }
+}
+
+function renderSettingsForm() {
+  const s = getSettings();
+  // Branding
+  $('s-company-name').value  = s.companyName  || '';
+  $('s-logo-url').value      = s.logoUrl       || '';
+  $('s-clock-format').value  = String(s.clockFormat || 12);
+  // Weather
+  $('s-weather-key').value      = s.weatherApiKey      || '';
+  $('s-weather-location').value = s.weatherLocation    || '';
+  $('s-weather-units').value    = s.weatherUnits        || 'imperial';
+  // Stocks
+  $('s-stocks-key').value    = s.stocksApiKey  || '';
+  const syms = Array.isArray(s.stockSymbols) ? s.stockSymbols : [];
+  $('s-stock-symbols').value = syms.join(', ');
+  // News
+  $('s-news-key').value      = s.newsApiKey    || '';
+  $('s-news-category').value = s.newsCategory  || 'technology';
+  $('s-news-country').value  = s.newsCountry   || 'us';
+  // Message
+  const src = s.messageSource || 'quotes';
+  $('s-message-source').value = src;
+  updateMessageHint(src);
+  const customMsgs = Array.isArray(s.customMessages) ? s.customMessages : [];
+  $('s-custom-messages').value = customMsgs
+    .map(m => m.author ? `${m.text} — ${m.author}` : m.text)
+    .join('\n');
+  // Music
+  $('s-music-enabled').checked = !!s.musicEnabled;
+  $('s-music-url').value   = s.musicUrl    || '';
+  $('s-music-volume').value = String(s.musicVolume ?? 60);
+  $('s-vol-display').textContent = String(s.musicVolume ?? 60);
+}
+
+function updateMessageHint(src) {
+  const hintBox = $('s-message-hint-box');
+  const customGroup = $('s-custom-msg-group');
+  if (hintBox) hintBox.innerHTML = MESSAGE_SOURCE_HINTS[src] || '';
+  if (customGroup) customGroup.classList.toggle('field-hidden', src !== 'custom');
+}
+
+function parseCustomMessages(raw) {
+  return raw.split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const dashIdx = line.lastIndexOf(' — ');
+      if (dashIdx > 0) {
+        return { text: line.slice(0, dashIdx).trim(), author: line.slice(dashIdx + 3).trim() };
+      }
+      // Also try plain dash
+      const plainDash = line.lastIndexOf(' - ');
+      if (plainDash > 0) {
+        return { text: line.slice(0, plainDash).trim(), author: line.slice(plainDash + 3).trim() };
+      }
+      return { text: line, author: '' };
+    });
+}
+
+function saveSettings() {
+  const symbols = $('s-stock-symbols').value
+    .split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+
+  const settings = {
+    companyName:     $('s-company-name').value.trim(),
+    logoUrl:         $('s-logo-url').value.trim(),
+    clockFormat:     parseInt($('s-clock-format').value, 10),
+    weatherApiKey:   $('s-weather-key').value.trim(),
+    weatherLocation: $('s-weather-location').value.trim(),
+    weatherUnits:    $('s-weather-units').value,
+    stocksApiKey:    $('s-stocks-key').value.trim(),
+    stockSymbols:    symbols.length ? symbols : ['AAPL','MSFT','GOOGL','AMZN','TSLA','SPY'],
+    newsApiKey:      $('s-news-key').value.trim(),
+    newsCategory:    $('s-news-category').value,
+    newsCountry:     $('s-news-country').value,
+    messageSource:   $('s-message-source').value,
+    customMessages:  parseCustomMessages($('s-custom-messages').value),
+    musicEnabled:    $('s-music-enabled').checked,
+    musicUrl:        $('s-music-url').value.trim(),
+    musicVolume:     parseInt($('s-music-volume').value, 10),
+  };
+
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    showToast('Settings saved — display will update shortly ✓');
+    // Collapse the panel after saving
+    $('settings-section').classList.remove('open');
+    $('settings-body').classList.add('hidden');
+  } catch (e) {
+    showToast('Failed to save settings: ' + e.message, 'var(--red)');
+  }
+}
+
+// Wire up settings panel
+$('settings-toggle').addEventListener('click', () => {
+  const section = $('settings-section');
+  const body    = $('settings-body');
+  const isOpen  = section.classList.toggle('open');
+  body.classList.toggle('hidden', !isOpen);
+  $('settings-toggle').setAttribute('aria-expanded', String(isOpen));
+  if (isOpen) renderSettingsForm();
+});
+
+$('s-message-source').addEventListener('change', () => {
+  updateMessageHint($('s-message-source').value);
+});
+
+$('s-music-volume').addEventListener('input', () => {
+  $('s-vol-display').textContent = $('s-music-volume').value;
+});
+
+$('btn-save-settings').addEventListener('click', saveSettings);
 
 // ── Initial render ────────────────────────────────────────────
 

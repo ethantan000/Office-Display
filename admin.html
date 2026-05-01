@@ -39,6 +39,168 @@
       </div>
     </section>
 
+    <!-- ── DASHBOARD SETTINGS ───────────────────────────── -->
+    <section class="settings-section" id="settings-section">
+      <button class="settings-toggle-btn" id="settings-toggle" aria-expanded="false">
+        <span>⚙&ensp;Dashboard Settings</span>
+        <span class="settings-arrow">›</span>
+      </button>
+
+      <div class="settings-body hidden" id="settings-body">
+
+        <!-- Branding -->
+        <div class="settings-group">
+          <div class="settings-group-title">Branding</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="s-company-name">Company Name</label>
+              <input type="text" id="s-company-name" placeholder="Your Company" />
+            </div>
+            <div class="form-group">
+              <label for="s-logo-url">Logo URL</label>
+              <input type="url" id="s-logo-url" placeholder="https://… or logo.png" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="s-clock-format">Clock Format</label>
+            <select id="s-clock-format">
+              <option value="12">12-hour (1:30 PM)</option>
+              <option value="24">24-hour (13:30)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="settings-group">
+          <div class="settings-group-title">Weather</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="s-weather-key">API Key <a href="https://openweathermap.org/api" target="_blank" class="settings-link">Get free key ↗</a></label>
+              <input type="text" id="s-weather-key" placeholder="Paste OpenWeatherMap key" />
+            </div>
+            <div class="form-group">
+              <label for="s-weather-location">Location</label>
+              <input type="text" id="s-weather-location" placeholder="New York or 40.71,-74.00" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="s-weather-units">Units</label>
+            <select id="s-weather-units">
+              <option value="imperial">Imperial (°F, mph)</option>
+              <option value="metric">Metric (°C, km/h)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Stocks -->
+        <div class="settings-group">
+          <div class="settings-group-title">Stocks &amp; Market Ticker</div>
+          <div class="form-group">
+            <label for="s-stocks-key">API Key <a href="https://finnhub.io" target="_blank" class="settings-link">Get free key ↗</a></label>
+            <input type="text" id="s-stocks-key" placeholder="Paste Finnhub key" />
+          </div>
+          <div class="form-group">
+            <label for="s-stock-symbols">Ticker Symbols</label>
+            <input type="text" id="s-stock-symbols" placeholder="AAPL, MSFT, GOOGL, SPY, BINANCE:BTCUSDT" />
+            <div class="form-hint">Comma-separated. Supports US stocks, ETFs, and crypto (e.g. BINANCE:BTCUSDT).</div>
+          </div>
+        </div>
+
+        <!-- News -->
+        <div class="settings-group">
+          <div class="settings-group-title">News Ticker</div>
+          <div class="form-group">
+            <label for="s-news-key">API Key <a href="https://newsapi.org" target="_blank" class="settings-link">Get free key ↗</a></label>
+            <input type="text" id="s-news-key" placeholder="Paste NewsAPI key" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="s-news-category">Category</label>
+              <select id="s-news-category">
+                <option value="technology">Technology</option>
+                <option value="business">Business</option>
+                <option value="general">General</option>
+                <option value="health">Health</option>
+                <option value="science">Science</option>
+                <option value="sports">Sports</option>
+                <option value="entertainment">Entertainment</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="s-news-country">Country</label>
+              <select id="s-news-country">
+                <option value="us">United States</option>
+                <option value="gb">United Kingdom</option>
+                <option value="ca">Canada</option>
+                <option value="au">Australia</option>
+                <option value="de">Germany</option>
+                <option value="fr">France</option>
+                <option value="jp">Japan</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message of the Day -->
+        <div class="settings-group">
+          <div class="settings-group-title">Message of the Day</div>
+          <div class="form-group">
+            <label for="s-message-source">Content Source</label>
+            <select id="s-message-source">
+              <option value="quotes">Famous Quotes — pulled fresh daily</option>
+              <option value="tips">Workplace Productivity Tips — built-in rotating list</option>
+              <option value="facts">Fun Facts — built-in rotating list</option>
+              <option value="custom">Custom Messages — your own list below</option>
+            </select>
+          </div>
+          <div id="s-message-hint-box" class="settings-hint-box">
+            A new quote is fetched from <strong>quotable.io</strong> each day. No API key required.
+          </div>
+          <div class="form-group field-hidden" id="s-custom-msg-group">
+            <label for="s-custom-messages">Your Messages</label>
+            <textarea id="s-custom-messages" rows="6"
+              placeholder="One message per line. Optionally add — Author at the end.&#10;&#10;The secret of getting ahead is getting started. — Mark Twain&#10;Always be learning."></textarea>
+            <div class="form-hint">One message per line. Cycles through daily in order.</div>
+          </div>
+        </div>
+
+        <!-- Music Player -->
+        <div class="settings-group">
+          <div class="settings-group-title">Music Player</div>
+          <div class="form-group">
+            <label class="toggle-row-label">
+              <label class="toggle-switch">
+                <input type="checkbox" id="s-music-enabled" />
+                <span class="toggle-track"></span>
+              </label>
+              Show music player on display
+            </label>
+          </div>
+          <div id="s-music-fields">
+            <div class="form-group">
+              <label for="s-music-url">YouTube URL</label>
+              <input type="url" id="s-music-url" placeholder="https://www.youtube.com/playlist?list=…" />
+              <div class="form-hint">
+                Paste any YouTube video URL, playlist URL, or mix URL.
+                For background music try searching "lofi playlist" or "jazz playlist" on YouTube.
+                <br>⚠ YouTube Music (music.youtube.com) links are not embeddable — use regular YouTube URLs.
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="s-music-volume">Default Volume: <span id="s-vol-display">60</span>%</label>
+              <input type="range" id="s-music-volume" min="0" max="100" value="60" />
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-footer">
+          <button id="btn-save-settings" class="btn btn-success">Apply Settings</button>
+          <span class="settings-save-hint">Changes will apply to the display within seconds.</span>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ── PLAYLIST ──────────────────────────────────────── -->
     <div class="playlist-header">
       <h2>Playlist</h2>

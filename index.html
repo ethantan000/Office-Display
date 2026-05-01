@@ -88,6 +88,28 @@
   <!-- Admin shortcut hint -->
   <div id="admin-hint" class="admin-hint">Press <kbd>A</kbd> to manage playlist</div>
 
+  <!-- YouTube music player (hidden off-screen, controlled via JS) -->
+  <div id="yt-player-container" aria-hidden="true" style="position:fixed;left:-10px;top:-10px;width:2px;height:2px;overflow:hidden;pointer-events:none;opacity:0;">
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- Music player controls widget -->
+  <div id="music-player" class="music-player hidden">
+    <button id="music-prev-btn" class="music-btn" title="Previous track">⏮</button>
+    <button id="music-play-btn" class="music-btn music-play-btn" title="Play / Pause">▶</button>
+    <button id="music-next-btn" class="music-btn" title="Next track">⏭</button>
+    <div class="music-divider"></div>
+    <div class="music-track-info">
+      <span class="music-note">♫</span>
+      <span id="music-title" class="music-title">Loading…</span>
+    </div>
+    <div class="music-divider"></div>
+    <div class="music-vol-ctrl">
+      <span class="music-vol-icon">🔊</span>
+      <input type="range" id="music-vol" class="music-vol-slider" min="0" max="100" value="60" />
+    </div>
+  </div>
+
   <script src="config.js"></script>
   <script src="themes.js"></script>
   <script src="app.js"></script>

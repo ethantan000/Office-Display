@@ -172,3 +172,7 @@ window.applyTheme = applyTheme;
 window.loadTheme  = loadTheme;
 window.saveTheme  = saveTheme;
 window.THEME_KEY  = THEME_KEY;
+
+// Self-initialize: apply the saved theme as soon as this script executes,
+// so there is never a flash of the default CSS variables on any page.
+loadTheme();
