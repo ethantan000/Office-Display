@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Office Display</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- TOP BAR: Logo + Clock/Date -->
+  <header class="top-bar">
+    <div class="logo-area">
+      <img id="company-logo" src="" alt="Company Logo" />
+      <span id="company-name">Your Company</span>
+    </div>
+    <div class="clock-area">
+      <div id="clock">00:00:00</div>
+      <div id="date">Loading...</div>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <main class="grid">
+    <!-- Weather -->
+    <section class="card weather-card">
+      <h2>Weather</h2>
+      <div id="weather-content" class="weather-content">
+        <div class="weather-main">
+          <span id="weather-icon" class="weather-icon">&#9729;</span>
+          <span id="weather-temp" class="weather-temp">--°F</span>
+        </div>
+        <div id="weather-desc" class="weather-desc">Loading...</div>
+        <div id="weather-location" class="weather-location"></div>
+        <div class="weather-details">
+          <span>&#128167; <span id="weather-humidity">--%</span></span>
+          <span>&#127788; <span id="weather-wind">-- mph</span></span>
+        </div>
+        <div id="weather-forecast" class="weather-forecast"></div>
+      </div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="card calendar-card">
+      <h2>Calendar</h2>
+      <div id="calendar-container"></div>
+    </section>
+
+    <!-- Stock Ticker -->
+    <section class="card stocks-card">
+      <h2>Market</h2>
+      <div id="stocks-container" class="stocks-container"></div>
+      <div class="stocks-disclaimer">Prices delayed 15+ min. For display only.</div>
+    </section>
+
+    <!-- Daily Message -->
+    <section class="card message-card">
+      <h2>Message of the Day</h2>
+      <blockquote id="daily-message" class="daily-message">Loading...</blockquote>
+      <cite id="daily-author" class="daily-author"></cite>
+    </section>
+
+    <!-- News Ticker -->
+    <section class="card news-card">
+      <h2>News</h2>
+      <div id="news-container" class="news-container">
+        <div id="news-ticker" class="news-ticker">Loading news...</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM TICKER BAR -->
+  <footer class="ticker-bar">
+    <div class="ticker-label">STOCKS</div>
+    <div class="ticker-track-wrapper">
+      <div id="bottom-ticker" class="ticker-track">Loading...</div>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

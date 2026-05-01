@@ -1,0 +1,445 @@
+// ============================================================
+//  OFFICE DISPLAY — MAIN APPLICATION
+// ============================================================
+
+const CFG = window.OFFICE_CONFIG;
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function $(id) { return document.getElementById(id); }
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function directionArrow(change) {
+  if (change > 0) return '▲';
+  if (change < 0) return '▼';
+  return '—';
+}
+
+function changeClass(change) {
+  if (change > 0) return 'up';
+  if (change < 0) return 'down';
+  return 'flat';
+}
+
+// ── Clock & Date ─────────────────────────────────────────────
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = pad(now.getMinutes());
+  const s = pad(now.getSeconds());
+  let suffix = '';
+
+  if (CFG.clockFormat === 12) {
+    suffix = h >= 12 ? ' PM' : ' AM';
+    h = h % 12 || 12;
+  } else {
+    h = pad(h);
+  }
+
+  $('clock').textContent = `${h}:${m}:${s}${suffix}`;
+  $('date').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Branding ─────────────────────────────────────────────────
+
+$('company-name').textContent = CFG.companyName;
+if (CFG.logoUrl) {
+  const logo = $('company-logo');
+  logo.src = CFG.logoUrl;
+  logo.style.display = 'block';
+}
+
+// ── Calendar ─────────────────────────────────────────────────
+
+function buildCalendar() {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+
+  const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const firstDay  = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const container = $('calendar-container');
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'cal-header';
+  header.textContent = monthName;
+  container.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'cal-grid';
+
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+    const dn = document.createElement('div');
+    dn.className = 'day-name';
+    dn.textContent = d;
+    grid.appendChild(dn);
+  });
+
+  // blank cells before the 1st
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'day empty';
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    cell.className = 'day';
+    const dow = (firstDay + d - 1) % 7;
+    if (d === today)            cell.classList.add('today');
+    else if (dow === 0 || dow === 6) cell.classList.add('weekend');
+    cell.textContent = d;
+    grid.appendChild(cell);
+  }
+
+  container.appendChild(grid);
+}
+
+buildCalendar();
+
+// Rebuild at midnight
+(function scheduleMidnight() {
+  const now = new Date();
+  const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+  setTimeout(() => { buildCalendar(); scheduleMidnight(); }, msUntilMidnight);
+})();
+
+// ── Weather ──────────────────────────────────────────────────
+
+const WEATHER_ICONS = {
+  '01d':'☀️','01n':'🌙','02d':'⛅','02n':'⛅',
+  '03d':'☁️','03n':'☁️','04d':'☁️','04n':'☁️',
+  '09d':'🌧️','09n':'🌧️','10d':'🌦️','10n':'🌧️',
+  '11d':'⛈️','11n':'⛈️','13d':'❄️','13n':'❄️','50d':'🌫️','50n':'🌫️',
+};
+
+async function fetchWeather() {
+  const key = CFG.weatherApiKey;
+  if (!key) {
+    showWeatherDemo();
+    return;
+  }
+
+  const loc   = CFG.weatherLocation;
+  const units = CFG.weatherUnits;
+  const unitLabel = units === 'metric' ? '°C' : '°F';
+  const windLabel = units === 'metric' ? 'km/h' : 'mph';
+  const q = encodeURIComponent(loc);
+
+  try {
+    // Current weather
+    const [curr, fore] = await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${q}&appid=${key}&units=${units}`).then(r => r.json()),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${q}&appid=${key}&units=${units}&cnt=40`).then(r => r.json()),
+    ]);
+
+    if (curr.cod !== 200) throw new Error(curr.message || 'Weather error');
+
+    $('weather-icon').textContent = WEATHER_ICONS[curr.weather[0].icon] || '🌡️';
+    $('weather-temp').textContent = `${Math.round(curr.main.temp)}${unitLabel}`;
+    $('weather-desc').textContent = curr.weather[0].description;
+    $('weather-location').textContent = `${curr.name}, ${curr.sys.country}`;
+    $('weather-humidity').textContent = `${curr.main.humidity}%`;
+    $('weather-wind').textContent = `${Math.round(curr.wind.speed)} ${windLabel}`;
+
+    // 4-day forecast (take noon reading for each future day)
+    if (fore.cod === '200') {
+      const days = {};
+      fore.list.forEach(item => {
+        const d = item.dt_txt.slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
+        if (d === today) return;
+        if (!days[d]) days[d] = [];
+        days[d].push(item);
+      });
+
+      const foreEl = $('weather-forecast');
+      foreEl.innerHTML = '';
+
+      Object.entries(days).slice(0, 4).forEach(([date, items]) => {
+        const noon = items.find(i => i.dt_txt.includes('12:00')) || items[Math.floor(items.length / 2)];
+        const hi   = Math.round(Math.max(...items.map(i => i.main.temp_max)));
+        const lo   = Math.round(Math.min(...items.map(i => i.main.temp_min)));
+        const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+
+        const fc = document.createElement('div');
+        fc.className = 'forecast-day';
+        fc.innerHTML = `
+          <div class="f-label">${label}</div>
+          <div class="f-icon">${WEATHER_ICONS[noon.weather[0].icon] || '🌡️'}</div>
+          <div class="f-hi">${hi}${unitLabel}</div>
+          <div class="f-lo">${lo}${unitLabel}</div>
+        `;
+        foreEl.appendChild(fc);
+      });
+    }
+  } catch (e) {
+    $('weather-desc').textContent = 'Unable to load weather';
+    $('weather-desc').className = 'weather-desc error';
+    console.error('Weather error:', e);
+  }
+}
+
+function showWeatherDemo() {
+  $('weather-icon').textContent = '☀️';
+  $('weather-temp').textContent = '72°F';
+  $('weather-desc').textContent = 'Set weatherApiKey in config.js';
+  $('weather-location').textContent = 'Demo Mode';
+  $('weather-humidity').textContent = '45%';
+  $('weather-wind').textContent = '8 mph';
+
+  const foreEl = $('weather-forecast');
+  foreEl.innerHTML = '';
+  ['Mon','Tue','Wed','Thu'].forEach((d, i) => {
+    const icons = ['⛅','🌧️','☀️','☁️'];
+    const fc = document.createElement('div');
+    fc.className = 'forecast-day';
+    fc.innerHTML = `
+      <div class="f-label">${d}</div>
+      <div class="f-icon">${icons[i]}</div>
+      <div class="f-hi">${68 + i * 2}°F</div>
+      <div class="f-lo">${55 + i}°F</div>
+    `;
+    foreEl.appendChild(fc);
+  });
+}
+
+fetchWeather();
+setInterval(fetchWeather, CFG.weatherRefreshMinutes * 60 * 1000);
+
+// ── Stocks ───────────────────────────────────────────────────
+
+let stockData = {}; // symbol -> { price, change, changePct }
+
+async function fetchStocks() {
+  const key     = CFG.stocksApiKey;
+  const symbols = CFG.stockSymbols;
+
+  if (!key) {
+    showStocksDemo();
+    return;
+  }
+
+  const results = await Promise.allSettled(
+    symbols.map(sym =>
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${key}`)
+        .then(r => r.json())
+        .then(data => ({ sym, price: data.c, change: data.d, changePct: data.dp }))
+    )
+  );
+
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      stockData[r.value.sym] = r.value;
+    }
+  });
+
+  renderStocks();
+  renderBottomTicker();
+}
+
+function renderStocks() {
+  const container = $('stocks-container');
+  container.innerHTML = '';
+
+  CFG.stockSymbols.forEach(sym => {
+    const d   = stockData[sym];
+    const row = document.createElement('div');
+    row.className = 'stock-row';
+
+    if (!d) {
+      row.innerHTML = `<span class="stock-symbol">${sym}</span><span class="loading">—</span>`;
+    } else {
+      const cls = changeClass(d.change);
+      const arrow = directionArrow(d.change);
+      row.innerHTML = `
+        <span class="stock-symbol">${sym}</span>
+        <span class="stock-price">$${d.price.toFixed(2)}</span>
+        <span class="stock-change ${cls}">${arrow} ${Math.abs(d.changePct).toFixed(2)}%</span>
+      `;
+    }
+    container.appendChild(row);
+  });
+}
+
+function renderBottomTicker() {
+  const ticker = $('bottom-ticker');
+  ticker.innerHTML = '';
+
+  CFG.stockSymbols.forEach(sym => {
+    const d    = stockData[sym];
+    const item = document.createElement('span');
+    item.className = 'ticker-item';
+
+    if (!d) {
+      item.innerHTML = `<span class="ticker-sym">${sym}</span><span class="ticker-price">—</span>`;
+    } else {
+      const cls   = changeClass(d.change);
+      const arrow = directionArrow(d.change);
+      item.innerHTML = `
+        <span class="ticker-sym">${sym}</span>
+        <span class="ticker-price">$${d.price.toFixed(2)}</span>
+        <span class="ticker-chg ${cls}">${arrow} ${Math.abs(d.changePct).toFixed(2)}%</span>
+      `;
+    }
+    ticker.appendChild(item);
+  });
+
+  // Restart animation so new data scrolls from the right
+  ticker.style.animation = 'none';
+  ticker.offsetHeight; // reflow
+  ticker.style.animation = '';
+}
+
+function showStocksDemo() {
+  const demos = [
+    { sym: 'AAPL',  price: 189.30, change: 2.14,  changePct: 1.14  },
+    { sym: 'MSFT',  price: 415.00, change: -1.22, changePct: -0.29 },
+    { sym: 'GOOGL', price: 175.50, change: 0.95,  changePct: 0.54  },
+    { sym: 'AMZN',  price: 198.75, change: 3.40,  changePct: 1.74  },
+    { sym: 'TSLA',  price: 172.00, change: -5.60, changePct: -3.15 },
+    { sym: 'SPY',   price: 524.00, change: 1.80,  changePct: 0.34  },
+  ];
+  demos.forEach(d => { stockData[d.sym] = d; });
+  renderStocks();
+  renderBottomTicker();
+}
+
+fetchStocks();
+setInterval(fetchStocks, CFG.stocksRefreshSeconds * 1000);
+
+// ── Daily Message ─────────────────────────────────────────────
+
+let messageIndex = 0;
+
+async function fetchMessage() {
+  if (CFG.useCustomMessages) {
+    const msgs = CFG.customMessages;
+    const m    = msgs[messageIndex % msgs.length];
+    messageIndex++;
+    $('daily-message').textContent = `"${m.text}"`;
+    $('daily-author').textContent   = `— ${m.author}`;
+    return;
+  }
+
+  try {
+    const data = await fetch('https://api.quotable.io/random?maxLength=160').then(r => r.json());
+    $('daily-message').textContent = `"${data.content}"`;
+    $('daily-author').textContent   = `— ${data.author}`;
+  } catch {
+    // fallback to built-in list
+    CFG.useCustomMessages = true;
+    fetchMessage();
+  }
+}
+
+fetchMessage();
+// Rotate quote every hour
+setInterval(fetchMessage, 60 * 60 * 1000);
+
+// ── News ──────────────────────────────────────────────────────
+
+let newsHeadlines = [];
+let newsIndex     = 0;
+
+async function fetchNews() {
+  const key = CFG.newsApiKey;
+  if (!key) {
+    newsHeadlines = [
+      'Set newsApiKey in config.js to display live headlines',
+      'Get a free API key at newsapi.org',
+      'Configure your office display at config.js',
+    ];
+    return;
+  }
+
+  try {
+    const url = `https://newsapi.org/v2/top-headlines?country=${CFG.newsCountry}&category=${CFG.newsCategory}&pageSize=${CFG.newsCount}&apiKey=${key}`;
+    const data = await fetch(url).then(r => r.json());
+    if (data.status === 'ok' && data.articles.length) {
+      newsHeadlines = data.articles.map(a => a.title).filter(Boolean);
+    }
+  } catch (e) {
+    console.error('News error:', e);
+  }
+}
+
+function rotateNews() {
+  if (!newsHeadlines.length) return;
+  const ticker = $('news-ticker');
+  ticker.style.opacity = '0';
+  setTimeout(() => {
+    ticker.textContent = newsHeadlines[newsIndex % newsHeadlines.length];
+    newsIndex++;
+    ticker.style.opacity = '1';
+  }, 400);
+}
+
+// Swap the bottom ticker label to NEWS and show headline every N seconds
+let tickerMode = 'stocks'; // 'stocks' | 'news'
+let tickerModeCounter = 0;
+const STOCKS_CYCLES = 3; // show stocks for 3 scroll cycles, then news once
+
+function tickerModeToggle() {
+  if (!newsHeadlines.length) return;
+  tickerModeCounter++;
+
+  const label  = document.querySelector('.ticker-label');
+  const ticker = $('bottom-ticker');
+
+  if (tickerMode === 'stocks' && tickerModeCounter >= STOCKS_CYCLES) {
+    // switch to news
+    tickerMode = 'stocks'; // always show stocks in ticker for now; news shown via news card area
+  }
+}
+
+// Separate news display: re-use the hidden .news-card approach —
+// instead we inject headlines into the bottom ticker alternating with stocks.
+function startNewsCycle() {
+  if (newsHeadlines.length === 0) return;
+
+  const label  = document.querySelector('.ticker-label');
+  const ticker = $('bottom-ticker');
+
+  let isNews = false;
+
+  setInterval(() => {
+    isNews = !isNews;
+    if (isNews && newsHeadlines.length) {
+      label.textContent = 'NEWS';
+      label.style.background = '#d29922';
+      ticker.innerHTML = '';
+      const item = document.createElement('span');
+      item.className = 'ticker-item';
+      item.style.fontSize = '1rem';
+      item.textContent = newsHeadlines[newsIndex % newsHeadlines.length];
+      newsIndex++;
+      ticker.appendChild(item);
+      ticker.style.animation = 'none';
+      ticker.offsetHeight;
+      ticker.style.animationDuration = '22s';
+      ticker.style.animation = '';
+    } else {
+      label.textContent = 'STOCKS';
+      label.style.background = '';
+      renderBottomTicker();
+    }
+  }, 20000);
+}
+
+(async () => {
+  await fetchNews();
+  startNewsCycle();
+  setInterval(fetchNews, CFG.newsRefreshMinutes * 60 * 1000);
+})();

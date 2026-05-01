@@ -1,0 +1,402 @@
+/* ============================================================
+   OFFICE DISPLAY — STYLES
+   1920×1080 (16:9) optimized, scales to any TV resolution
+   ============================================================ */
+
+:root {
+  --bg:         #0d1117;
+  --surface:    #161b22;
+  --surface2:   #21262d;
+  --border:     #30363d;
+  --accent:     #58a6ff;
+  --accent2:    #3fb950;
+  --red:        #f85149;
+  --yellow:     #d29922;
+  --text:       #e6edf3;
+  --text-muted: #8b949e;
+  --font:       'Segoe UI', system-ui, sans-serif;
+
+  --header-h:   90px;
+  --footer-h:   52px;
+  --gap:        14px;
+  --radius:     12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── TOP BAR ─────────────────────────────────────────────── */
+.top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 100;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+#company-logo {
+  height: 52px;
+  max-width: 180px;
+  object-fit: contain;
+  display: none; /* shown by JS when src is set */
+}
+
+#company-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.clock-area {
+  text-align: right;
+}
+
+#clock {
+  font-size: 2.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+#date {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── MAIN GRID ───────────────────────────────────────────── */
+main.grid {
+  position: fixed;
+  top: var(--header-h);
+  bottom: var(--footer-h);
+  left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+/* card layout assignments */
+.weather-card  { grid-column: 1; grid-row: 1; }
+.calendar-card { grid-column: 2; grid-row: 1 / span 2; }
+.stocks-card   { grid-column: 3; grid-row: 1 / span 2; }
+.message-card  { grid-column: 1; grid-row: 2; }
+.news-card     { display: none; } /* news shown in footer ticker instead */
+
+/* ── CARD BASE ───────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card h2 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+/* ── WEATHER ─────────────────────────────────────────────── */
+.weather-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.weather-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+}
+
+.weather-temp {
+  font-size: 3.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.weather-desc {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.weather-location {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.weather-details {
+  display: flex;
+  gap: 18px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.weather-forecast {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.forecast-day {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 68px;
+  flex: 1;
+}
+
+.forecast-day .f-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; }
+.forecast-day .f-icon  { font-size: 1.5rem; }
+.forecast-day .f-hi    { font-size: 0.9rem; font-weight: 600; }
+.forecast-day .f-lo    { font-size: 0.78rem; color: var(--text-muted); }
+
+/* ── CALENDAR ────────────────────────────────────────────── */
+#calendar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  flex: 1;
+}
+
+.cal-grid .day-name {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 4px;
+}
+
+.cal-grid .day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.cal-grid .day.empty        { background: transparent; }
+.cal-grid .day.other-month  { color: var(--border); }
+.cal-grid .day.today {
+  background: var(--accent);
+  color: #0d1117;
+  font-weight: 700;
+  border-radius: 50%;
+}
+.cal-grid .day.weekend      { color: var(--text-muted); }
+
+/* ── STOCKS ──────────────────────────────────────────────── */
+.stocks-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+
+.stock-symbol {
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 60px;
+}
+
+.stock-price {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.stock-change {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 72px;
+  text-align: right;
+}
+
+.stock-change.up   { color: var(--accent2); }
+.stock-change.down { color: var(--red); }
+.stock-change.flat { color: var(--text-muted); }
+
+.stocks-disclaimer {
+  font-size: 0.65rem;
+  color: var(--border);
+  text-align: center;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* ── MESSAGE ─────────────────────────────────────────────── */
+.message-card {
+  justify-content: center;
+}
+
+.daily-message {
+  font-size: 1.15rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--text);
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.daily-author {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+/* ── BOTTOM TICKER ───────────────────────────────────────── */
+.ticker-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--footer-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.ticker-label {
+  background: var(--accent);
+  color: #0d1117;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.ticker-track-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  animation: ticker-scroll 60s linear infinite;
+  will-change: transform;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(-100%); }
+}
+
+.ticker-item {
+  margin-right: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticker-sym  { font-weight: 700; color: var(--text); }
+.ticker-price { color: var(--text-muted); }
+.ticker-chg.up   { color: var(--accent2); }
+.ticker-chg.down { color: var(--red); }
+.ticker-chg.flat { color: var(--text-muted); }
+
+/* ── NEWS CARD (hidden – shown via ticker bar on bottom) ─── */
+
+/* ── RESPONSIVE SCALING ──────────────────────────────────── */
+/* The dashboard is designed for 1920×1080.
+   At other sizes the font-size on <html> scales everything. */
+@media (max-width: 1400px) { html { font-size: 90%; } }
+@media (max-width: 1100px) { html { font-size: 78%; } }
+@media (max-width:  800px) {
+  html { font-size: 65%; }
+  main.grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .calendar-card { grid-column: 1 / span 2; grid-row: 2; }
+  .stocks-card   { grid-column: 1 / span 2; grid-row: 3; }
+  .message-card  { grid-column: 1 / span 2; grid-row: 4; }
+}
+
+/* ── UTILITY ─────────────────────────────────────────────── */
+.loading { color: var(--text-muted); font-style: italic; }
+.error   { color: var(--red); font-size: 0.85rem; }
